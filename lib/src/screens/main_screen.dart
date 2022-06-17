@@ -7,9 +7,8 @@ import 'package:weather/utils/utils.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 
 class MainScreen extends StatefulWidget {
-  
   const MainScreen({super.key});
-  
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
@@ -51,129 +50,141 @@ class _MainScreenState extends State<MainScreen> {
         color: const Color(0xff232634),
       ),
       SingleChildScrollView(
-        child: Column(children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 100),
-            child: Text(
-              'DNDB Weather',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 50,
-                  fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: width * 0.5,
-                height: heigth * 0.35,
-                child: SvgPicture.asset('assets/svg/image1.svg'),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 30),
-            child: Column(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 100),
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                SizedBox(
-                  width: width * 0.4,
-                  child: TextField(
-                      controller: _text,
-                      onSubmitted: (value) {
-                        setState(() {
-                          _text.value.text.isEmpty
-                              ? _validate = true
-                              : _validate = false;
-                          _cargando = true;
-                        });
+                Text(
+                  'DNDB Weather',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 50,
+                      fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: width * 0.5,
+                      height: heigth * 0.35,
+                      child: SvgPicture.asset('assets/svg/image1.svg'),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    SizedBox(
+                      width: width * 0.4,
+                      child: TextField(
+                          controller: _text,
+                          onSubmitted: (value) {
+                            setState(() {
+                              _text.value.text.isEmpty
+                                  ? _validate = true
+                                  : _validate = false;
+                            });
 
-                        if (!_validate) {
-                          weatherProvider
-                              .getCurrentCityWeather(value)
-                              .then((valor) {
-                            weatherProvider.getPrevisionCityWeather(value);
-                            Future.delayed(Duration(milliseconds: 800), (() {
+                            if (!_validate) {
+                              _cargando = true;
+                              weatherProvider
+                                  .getCurrentCityWeather(value)
+                                  .then((valor) {
+                                weatherProvider.getPrevisionCityWeather(value);
+                                Future.delayed(Duration(milliseconds: 800),
+                                    (() {
+                                  Navigator.pushNamed(context, 'city');
+                                }));
+                              }).catchError((error) {
+                                const snackBar = SnackBar(
+                                  content: Text(
+                                      "La ciudad que ha introducido no es válida"),
+                                  duration:
+                                      Duration(seconds: 2), //default is 4s
+                                );
+
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(snackBar);
+                              });
+                            }
+                          },
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Introduzca una ciudad',
+                            labelStyle: const TextStyle(color: Colors.white12),
+                            errorText: _validate
+                                ? 'La ciudad no puede estar vacía'
+                                : null,
+                          )),
+                    ),
+                    SizedBox(
+                      height: heigth * 0.1,
+                    ),
+                    Container(
+                      height: 60,
+                      width: 60,
+                      child: FloatingActionButton(
+                        focusColor: Color.fromARGB(255, 25, 46, 63),
+                        elevation: 6,
+                        onPressed: () {
+                          //weatherProvider.getCurrentCityWeather(query);
+                          Future<Position> position = Utils.determinePosition();
+                          
+                          setState(() {
+                              _cargando = true;
+                            });
+
+                          position.then((pos) {
+
+                            double latitude = pos.latitude;
+                            double longitude = pos.longitude;
+
+                            String positionString = '$latitude, $longitude';
+
+                            weatherProvider.getCurrentCityWeather(positionString);
+                            weatherProvider
+                                .getPrevisionCityWeather(positionString);
+                            Future.delayed(const Duration(milliseconds: 800),
+                                (() {
                               Navigator.pushNamed(context, 'city');
                             }));
                           }).catchError((error) {
                             const snackBar = SnackBar(
-                              content: Text(
-                                  "La ciudad que ha introducido no es válida"),
+                              content:
+                                  Text("Active la ubicación de su dispositivo"),
                               duration: Duration(seconds: 2), //default is 4s
                             );
 
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(snackBar);
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           });
-                        }
-                      },
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
+                        },
+                        backgroundColor: Color.fromARGB(255, 42, 46, 63),
+                        child: const Icon(Icons.location_on),
                       ),
-                      decoration: InputDecoration(
-                        labelText: 'Introduzca una ciudad',
-                        labelStyle: const TextStyle(color: Colors.white12),
-                        errorText:
-                            _validate ? 'La ciudad no puede estar vacía' : null,
-                      )),
-                ),
-                SizedBox(
-                  height: heigth * 0.1,
-                ),
-                FloatingActionButton(
-                  elevation: 4,
-                  onPressed: () {
-                    setState(() {
-                      _cargando = true;
-                    });
-
-                    //weatherProvider.getCurrentCityWeather(query);
-                    Future<Position> position = Utils.determinePosition();
-
-                    position.then((pos) {
-                      double latitude = pos.latitude;
-                      double longitude = pos.longitude;
-
-                      String positionString = '$latitude, $longitude';
-
-                      weatherProvider.getCurrentCityWeather(positionString);
-                      weatherProvider.getPrevisionCityWeather(positionString);
-                      Future.delayed(const Duration(milliseconds: 800), (() {
-                        Navigator.pushNamed(context, 'city');
-                      }));
-                    }).catchError((error) {
-                      const snackBar = SnackBar(
-                        content: Text("Active la ubicación de su dispositivo"),
-                        duration: Duration(seconds: 2), //default is 4s
-                      );
-
-                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                    });
-                  },
-                  backgroundColor: Color.fromARGB(255, 42, 46, 63),
-                  child: const Icon(Icons.location_history_outlined),
-                ),
-                if (_cargando)
-                  Container(
-                      margin: EdgeInsets.only(top: heigth * 0.05),
-                      child: DefaultTextStyle(
-                        style: const TextStyle(
-                          fontSize: 20.0,
+                    ),
+                    if (_cargando)
+                      Container(
+                        margin: EdgeInsets.only(top: 30),
+                        child: DefaultTextStyle(
+                          style: const TextStyle(
+                            fontSize: 20.0,
+                          ),
+                          child: AnimatedTextKit(
+                            animatedTexts: [
+                              WavyAnimatedText('Localizando ...'),
+                            ],
+                            isRepeatingAnimation: true,
+                          ),
                         ),
-                        child: AnimatedTextKit(
-                          animatedTexts: [
-                            WavyAnimatedText('Localizando ...'),
-                          ],
-                          isRepeatingAnimation: true,
-                        ),
-                      ))
-              ],
-            ),
-          ),
-        ]),
+                      )
+                  ],
+                ),
+              ]),
+        ),
       ),
     ]));
   }
